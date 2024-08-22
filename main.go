@@ -7,6 +7,7 @@ import (
 	"github.com/BeCrafter/commander/cmd"
 	"github.com/BeCrafter/commander/cmd/jsondiff"
 	"github.com/BeCrafter/commander/cmd/listdiff"
+	"github.com/BeCrafter/commander/cmd/stress"
 	"github.com/urfave/cli/v2"
 )
 
@@ -15,6 +16,7 @@ func RegisterCmder() []cmd.ICmder {
 	return []cmd.ICmder{
 		jsondiff.NewCmder(),
 		listdiff.NewCmder(),
+		stress.NewCmder(),
 	}
 }
 
