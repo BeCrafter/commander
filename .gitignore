@@ -34,3 +34,4 @@ main
 *.swp
 __debug_bin*
 test
+output

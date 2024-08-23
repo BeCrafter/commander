@@ -6,7 +6,7 @@
 HOMEDIR=$(dirname $(dirname $(readlink -f $0)))
 OUTDIR=${HOMEDIR}/output
 
-cd ${HOMEDIR} && rm -rf ${OUTDIR}  2>/dev/null
+cd ${HOMEDIR} && rm -rf ${OUTDIR}  2>/dev/null && mkdir -p ${OUTDIR}
 
 
 index=-1
