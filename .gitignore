@@ -33,3 +33,4 @@ main
 .idea/
 *.swp
 __debug_bin*
+test
