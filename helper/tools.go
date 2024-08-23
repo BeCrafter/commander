@@ -120,36 +120,8 @@ func SortMapValuesByBytes(jsonBytes []byte) []byte {
 		return nil
 	}
 
-	result := make(map[string]interface{})
-	for k, v := range m {
-		switch reflect.TypeOf(v).Kind() {
-		case reflect.Slice:
-			// 尝试将切片转换为字符串切片
-			if strSlice, ok := v.([]string); ok {
-				sort.Strings(strSlice)
-				result[k] = strSlice
-			} else if slice, ok := v.([]interface{}); ok {
-				// 如果切片元素是interface{}，尝试转换为字符串切片
-				if strSlice, ok := interfaceSliceToStringSlice(slice); ok {
-					sort.Strings(strSlice)
-					result[k] = strSlice
-				} else if sortSlice, ok := interfaceSliceToSortSlice(slice); ok {
-					result[k] = sortSlice
-				} else {
-					// 对于非字符串切片，保持原样或进行其他处理
-					result[k] = slice
-				}
-			}
-		case reflect.Map:
-			// 递归处理嵌套的map
-			nestedMap := v.(map[string]interface{})
-			sortedMap := SortMapValues(nestedMap)
-			result[k] = sortedMap
-		default:
-			// 其他类型，直接赋值
-			result[k] = v
-		}
-	}
+	result := SortMapValues(m)
 	bytes, _ := json.Marshal(result)
+
 	return bytes
 }
