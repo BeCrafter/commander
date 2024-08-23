@@ -43,6 +43,10 @@ GLOBAL OPTIONS:
 
 这是一个 Go 压力测试工具，支持http和tcp协议。基于 [go-stress-testing](https://github.com/link1st/go-stress-testing) 同步而来，主要是为了方便实用。
 
+### jparser
+
+这是一个 json 格式化工具，支持对 json 中字段进行多级提取，方便从日志中获取目标数据。
+
 ## 开发
 
 请操作 cmd 下的 `_template` 目录，创建命令行工具，并将新增工具注册到 `main.go` 文件当中即可。

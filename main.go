@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/BeCrafter/commander/cmd"
+	"github.com/BeCrafter/commander/cmd/jparser"
 	"github.com/BeCrafter/commander/cmd/jsondiff"
 	"github.com/BeCrafter/commander/cmd/listdiff"
 	"github.com/BeCrafter/commander/cmd/stress"
@@ -17,6 +18,7 @@ func RegisterCmder() []cmd.ICmder {
 		jsondiff.NewCmder(),
 		listdiff.NewCmder(),
 		stress.NewCmder(),
+		jparser.NewCmder(),
 	}
 }
 
