@@ -77,6 +77,11 @@ func interfaceSliceToSortSlice(slice []interface{}) ([]interface{}, bool) {
 func SortMapValues(m map[string]interface{}) map[string]interface{} {
 	result := make(map[string]interface{})
 	for k, v := range m {
+		if v == nil {
+			result[k] = ""
+			continue
+		}
+
 		switch reflect.TypeOf(v).Kind() {
 		case reflect.Slice:
 			// 尝试将切片转换为字符串切片

@@ -81,11 +81,6 @@ func (r *Request) Run() ([]byte, []byte) {
 		os.Exit(2)
 	}
 
-	if r.Sort {
-		str1 = SortMapValuesByBytes(str1)
-		str2 = SortMapValuesByBytes(str2)
-	}
-
 	if r.Debug {
 		fmt.Printf("\n\n# ======================== Debug Ouput ========================== #\n\n")
 		fmt.Printf("First  request response: %s\n", string(str1))
@@ -144,6 +139,10 @@ func (r *Request) sendRequest(method, url string, data string) ([]byte, error) {
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
+	}
+
+	if r.Sort {
+		body = SortMapValuesByBytes(body)
 	}
 
 	if !r.Debug {
