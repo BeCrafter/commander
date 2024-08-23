@@ -73,6 +73,10 @@ func (c *Cmder) Register() *cli.Command {
 				Aliases: []string{"q"},
 				Usage:   "Suppress output, if no differences are found",
 			},
+			&cli.BoolFlag{
+				Name:  "sort",
+				Usage: "Sort the result content to ensure the order of data output",
+			},
 		},
 	}
 }
@@ -103,6 +107,7 @@ func (c *Cmder) Action(ctx *cli.Context) error {
 		Data:   ctx.StringSlice("data"),
 		Debug:  ctx.Bool("debug"),
 		Quiet:  ctx.Bool("quiet"),
+		Sort:   ctx.Bool("sort"),
 	}
 	str1, str2 := req.Run()
 

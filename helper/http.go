@@ -23,6 +23,7 @@ type Request struct {
 	Data   []string
 	Debug  bool
 	Quiet  bool
+	Sort   bool
 }
 
 func (r *Request) check() error {
@@ -78,6 +79,11 @@ func (r *Request) Run() ([]byte, []byte) {
 	if err2 != nil {
 		fmt.Printf("Error fetching result from %s: %v\n", url2, err2)
 		os.Exit(2)
+	}
+
+	if r.Sort {
+		str1 = SortMapValuesByBytes(str1)
+		str2 = SortMapValuesByBytes(str2)
 	}
 
 	if r.Debug {
