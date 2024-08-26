@@ -168,7 +168,7 @@ func (r *Request) JsonDiff(data1, data2 []byte, format string) string {
 
 	if d.Modified() || !r.Quiet {
 		if !r.Quiet {
-			fmt.Printf("\nThe JSON objects are the same, result:\n\n")
+			fmt.Printf("\nThe JSON objects result:\n\n")
 		} else {
 			fmt.Printf("\nThe JSON objects are different:\n\n")
 		}
