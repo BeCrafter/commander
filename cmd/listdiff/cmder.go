@@ -128,9 +128,9 @@ func (c *Cmder) Action(ctx *cli.Context) error {
 	fLen := len(ukeyList1)
 	sLen := len(ukeyList2)
 	if fLen != sLen {
-		color.New(color.FgRed).Printf("# 数据个数不一致: 第一个[%v] 第二个[%v]", fLen, sLen)
+		color.New(color.FgRed).Printf("# 数据个数不一致: 第一个[%v] 第二个[%v]\n", fLen, sLen)
 	} else {
-		color.New(color.FgGreen).Printf("# 数据个数一致: 第一个[%v] 第二个[%v]", fLen, sLen)
+		color.New(color.FgGreen).Printf("# 数据个数一致: 第一个[%v] 第二个[%v]\n", fLen, sLen)
 	}
 
 	fmt.Printf("\n\n\n")
@@ -138,9 +138,9 @@ func (c *Cmder) Action(ctx *cli.Context) error {
 	// 对比结果顺序一致性
 	for k, v := range ukeyList1 {
 		if v != ukeyList2[k] {
-			color.New(color.FgRed).Printf("<-> 数据顺序不一致: Pos[%v] 第一个[%v] 第二个[%v]", k, v, ukeyList2[k])
+			color.New(color.FgRed).Printf("<-> 数据顺序不一致: Pos[%v] 第一个[%v] 第二个[%v]\n", k, v, ukeyList2[k])
 		} else {
-			color.New(color.FgGreen).Printf("=== 数据顺序一致: Pos[%v] 第一个[%v] 第二个[%v]", k, v, ukeyList2[k])
+			color.New(color.FgGreen).Printf("=== 数据顺序一致: Pos[%v] 第一个[%v] 第二个[%v]\n", k, v, ukeyList2[k])
 		}
 	}
 
@@ -150,20 +150,20 @@ func (c *Cmder) Action(ctx *cli.Context) error {
 	for k, v := range resList1 {
 		if v2, has := resList2[k]; has {
 			if v != v2 {
-				color.New(color.FgYellow).Printf("+++ 数据不一致: [%v] 第一个[%v] 第二个[%v]", k, v, v2)
+				color.New(color.FgYellow).Printf("+++ 数据不一致: [%v] 第一个[%v] 第二个[%v]\n", k, v, v2)
 			} else {
-				color.New(color.FgGreen).Printf("=== 数据一致: [%v] 第一个[%v] 第二个[%v]", k, v, v2)
+				color.New(color.FgGreen).Printf("=== 数据一致: [%v] 第一个[%v] 第二个[%v]\n", k, v, v2)
 			}
 			delete(resList2, k)
 		} else {
-			color.New(color.FgRed).Printf("<-- 数据不一致: [%v] 第一个[%v] 第二个[无]", k, v)
+			color.New(color.FgRed).Printf("<-- 数据不一致: [%v] 第一个[%v] 第二个[无]\n", k, v)
 		}
 	}
 
 	if len(resList2) > 0 {
 		fmt.Println("")
 		for k, v := range resList2 {
-			color.New(color.FgRed).Printf("--> 数据不一致: [%v] 第一个[无] 第二个[%v]", k, v)
+			color.New(color.FgRed).Printf("--> 数据不一致: [%v] 第一个[无] 第二个[%v]\n", k, v)
 		}
 	}
 
