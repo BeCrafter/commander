@@ -11,6 +11,7 @@ import (
 
 	"github.com/BeCrafter/commander/cmd/stress/model"
 	"github.com/BeCrafter/commander/helper"
+	"github.com/fatih/color"
 
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
@@ -115,15 +116,15 @@ end:
 		receivedBytes)
 
 	fmt.Printf("\n\n")
-	fmt.Println("*************************  结果 stat  ****************************")
-	fmt.Println("处理协程数量:", concurrent)
+	color.New(color.FgGreen).Println("*************************  结果 stat  ****************************")
+	color.New(color.FgHiGreen).Println("处理协程数量:", concurrent)
 	// fmt.Println("处理协程数量:", concurrent, "程序处理总时长:", fmt.Sprintf("%.3f", float64(processingTime/concurrent)/1e9), "秒")
-	fmt.Println("请求总数（并发数*请求数 -c * -n）:", successNum+failureNum, "总请求时间:",
+	color.New(color.FgHiGreen).Println("请求总数（并发数*请求数 -c * -n）:", successNum+failureNum, "总请求时间:",
 		fmt.Sprintf("%.3f", float64(requestTime)/1e9),
 		"秒", "successNum:", successNum, "failureNum:", failureNum)
 	printTop(requestTimeList)
-	fmt.Println("*************************  结果 end   ****************************")
-	fmt.Printf("\n\n")
+	color.New(color.FgGreen).Println("*************************  结果 end   ****************************")
+	color.New(color.FgGreen).Printf("\n\n")
 }
 
 // printTop 排序后计算 top 90 95 99
@@ -134,9 +135,9 @@ func printTop(requestTimeList []uint64) {
 	var all helper.Uint64List
 	all = requestTimeList
 	sort.Sort(all)
-	fmt.Println("tp90:", fmt.Sprintf("%.3f", float64(all[int(float64(len(all))*0.90)]/1e6)))
-	fmt.Println("tp95:", fmt.Sprintf("%.3f", float64(all[int(float64(len(all))*0.95)]/1e6)))
-	fmt.Println("tp99:", fmt.Sprintf("%.3f", float64(all[int(float64(len(all))*0.99)]/1e6)))
+	color.New(color.FgHiGreen).Println("tp90:", fmt.Sprintf("%.3f", float64(all[int(float64(len(all))*0.90)]/1e6)))
+	color.New(color.FgHiGreen).Println("tp95:", fmt.Sprintf("%.3f", float64(all[int(float64(len(all))*0.95)]/1e6)))
+	color.New(color.FgHiGreen).Println("tp99:", fmt.Sprintf("%.3f", float64(all[int(float64(len(all))*0.99)]/1e6)))
 }
 
 // calculateData 计算数据
@@ -173,9 +174,9 @@ func calculateData(concurrent, processingTime, requestTime, maxTime, minTime, su
 func header() {
 	fmt.Printf("\n\n")
 	// 打印的时长都为毫秒 总请数
-	fmt.Println("─────┬───────┬───────┬───────┬────────┬────────┬────────┬────────┬────────┬────────┬────────")
-	fmt.Println(" 耗时│ 并发数│ 成功数│ 失败数│   qps  │最长耗时│最短耗时│平均耗时│下载字节│字节每秒│ 状态码")
-	fmt.Println("─────┼───────┼───────┼───────┼────────┼────────┼────────┼────────┼────────┼────────┼────────")
+	color.New(color.FgGreen).Println("─────┬───────┬───────┬───────┬────────┬────────┬────────┬────────┬────────┬────────┬────────")
+	color.New(color.FgGreen).Println(" 耗时│ 并发数│ 成功数│ 失败数│   qps  │最长耗时│最短耗时│平均耗时│下载字节│字节每秒│ 状态码")
+	color.New(color.FgGreen).Println("─────┼───────┼───────┼───────┼────────┼────────┼────────┼────────┼────────┼────────┼────────")
 	return
 }
 
@@ -207,7 +208,7 @@ func table(successNum, failureNum uint64, errCode *sync.Map,
 		requestTimeFloat, chanIDLen, successNum, failureNum, qps, maxTimeFloat, minTimeFloat, averageTime,
 		receivedBytesStr, speedStr,
 		printMap(errCode))
-	fmt.Println(result)
+	color.New(color.FgGreen).Println(result)
 	return
 }
 

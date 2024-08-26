@@ -7,6 +7,7 @@ import (
 
 	"github.com/BeCrafter/commander/cmd"
 	"github.com/BeCrafter/commander/helper"
+	"github.com/fatih/color"
 	"github.com/urfave/cli/v2"
 )
 
@@ -81,7 +82,7 @@ func (c *Cmder) Register() *cli.Command {
 
 func (c *Cmder) Action(ctx *cli.Context) error {
 	if len(ctx.StringSlice("host")) < 2 {
-		fmt.Fprintf(os.Stderr, "Error: %v\n\n", helper.ColorSize("至少需要两个请求 or 存在请求失败/空 or 数据不存在可比性", helper.FgRed))
+		color.New(color.FgRed).Fprintf(os.Stderr, "Error: %v\n\n", "至少需要两个请求 or 存在请求失败/空 or 数据不存在可比性")
 		return cli.ShowSubcommandHelp(ctx)
 	}
 

@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/BeCrafter/commander/cmd/stress/model"
-	"github.com/BeCrafter/commander/helper"
+	"github.com/fatih/color"
 )
 
 // HTTPStatusCode 通过 HTTP 状态码判断是否请求成功
@@ -18,8 +18,8 @@ func HTTPStatusCode(request *model.Request, response *http.Response, body []byte
 	}
 	// 开启调试模式
 	if request.GetDebug() {
-		httpCode := helper.ColorSize(fmt.Sprintf("HttpCode: %d", response.StatusCode), helper.FgHiGreen)
-		httpBody := helper.ColorSize(fmt.Sprintf("Res Body: %s", string(body)), helper.FgHiCyan)
+		httpCode := color.New(color.FgHiGreen).Sprintf("HttpCode: %d", response.StatusCode)
+		httpBody := color.New(color.FgHiCyan).Sprintf("Res Body: %s", string(body))
 		fmt.Printf("\n请求结果: \n %v\n %v \n\n", httpCode, httpBody)
 	}
 	return
@@ -43,7 +43,7 @@ func HTTPJson(request *model.Request, response *http.Response, body []byte) (cod
 		responseJSON := &ResponseJSON{}
 		if err := json.Unmarshal(body, responseJSON); err != nil {
 			code = model.ParseError
-			fmt.Printf("请求结果 json.Unmarshal err:%v", err)
+			color.New(color.FgRed).Printf("请求结果 json.Unmarshal err:%v", err)
 		} else {
 			code = responseJSON.Code
 			// body 中code返回200为返回数据成功
@@ -53,8 +53,8 @@ func HTTPJson(request *model.Request, response *http.Response, body []byte) (cod
 		}
 		// 开启调试模式
 		if request.GetDebug() {
-			httpCode := helper.ColorSize(fmt.Sprintf("HttpCode: %d", response.StatusCode), helper.FgHiGreen)
-			httpBody := helper.ColorSize(fmt.Sprintf("Res Body: %s", string(body)), helper.FgHiCyan)
+			httpCode := color.New(color.FgHiGreen).Sprintf("HttpCode: %d", response.StatusCode)
+			httpBody := color.New(color.FgHiCyan).Sprintf("Res Body: %s", string(body))
 			fmt.Printf("\n请求结果: \n %v\n %v \n\n", httpCode, httpBody)
 		}
 	}

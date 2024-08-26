@@ -12,6 +12,7 @@ import (
 	"github.com/BeCrafter/commander/cmd"
 	"github.com/BeCrafter/commander/cmd/stress/model"
 	"github.com/BeCrafter/commander/cmd/stress/server"
+	"github.com/fatih/color"
 	"github.com/urfave/cli/v2"
 )
 
@@ -169,7 +170,7 @@ func (c *Cmder) Action(ctx *cli.Context) error {
 		return fmt.Errorf("参数不合法, Err: %v", err)
 	}
 
-	fmt.Printf("\n 开始启动  并发数:%d 请求数:%d 请求参数: \n", c.concurrency, c.totalNumber)
+	color.New(color.FgGreen).Printf("\n开始启动  并发数:%d 请求数:%d 请求参数: \n\n", c.concurrency, c.totalNumber)
 	request.Print()
 
 	// 开始处理

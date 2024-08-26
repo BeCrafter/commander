@@ -10,6 +10,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/google/go-cmp/cmp"
 	"github.com/yudai/gojsondiff"
 	"github.com/yudai/gojsondiff/formatter"
@@ -72,12 +73,12 @@ func (r *Request) Run() ([]byte, []byte) {
 
 	str1, err1 := r.sendRequest(r.Method, url1, data)
 	if err1 != nil {
-		fmt.Printf("Error fetching result from %s: %v\n", url1, err1)
+		color.New(color.FgHiRed).Printf("Error fetching result from %s: %v\n", url1, err1)
 		os.Exit(2)
 	}
 	str2, err2 := r.sendRequest(r.Method, url2, data)
 	if err2 != nil {
-		fmt.Printf("Error fetching result from %s: %v\n", url2, err2)
+		color.New(color.FgHiRed).Printf("Error fetching result from %s: %v\n", url2, err2)
 		os.Exit(2)
 	}
 
@@ -97,7 +98,7 @@ func (r *Request) sendRequest(method, url string, data string) ([]byte, error) {
 	var err error
 
 	if r.Debug {
-		fmt.Printf("Sending request to: %s params: %s\n", url, data)
+		color.New(color.FgYellow).Printf("Sending request to: %s params: %s\n", url, data)
 	}
 
 	switch method {
@@ -162,18 +163,18 @@ func (r *Request) JsonDiff(data1, data2 []byte, format string) string {
 	differ := gojsondiff.New()
 	d, err := differ.Compare(data1, data2)
 	if err != nil {
-		fmt.Printf("Failed to unmarshal file: %s\n", err.Error())
+		color.New(color.FgHiRed).Printf("Failed to unmarshal file: %s\n", err.Error())
 		os.Exit(3)
 	}
 
 	if d.Modified() || !r.Quiet {
 		if !r.Quiet {
-			fmt.Printf("\nThe JSON objects result:\n\n")
+			color.New(color.FgHiCyan).Printf("\nThe JSON objects result:\n\n")
 		} else {
-			fmt.Printf("\nThe JSON objects are different:\n\n")
+			color.New(color.FgHiRed).Printf("\nThe JSON objects are different:\n\n")
 		}
 	} else {
-		fmt.Printf("\nThe JSON objects are the same.\n\n")
+		color.New(color.FgHiGreen).Printf("\nThe JSON objects are the same.\n\n")
 		os.Exit(0)
 	}
 
@@ -203,22 +204,22 @@ func (r *Request) CmpDiff(data1, data2 []byte) string {
 	var obj2 map[string]interface{}
 
 	if err1 := json.Unmarshal(data1, &obj1); err1 != nil {
-		fmt.Printf("Failed to unmarshal file1: %s\n", err1.Error())
+		color.New(color.FgHiRed).Printf("Failed to unmarshal file1: %s\n", err1.Error())
 		os.Exit(3)
 	}
 	if err2 := json.Unmarshal(data2, &obj2); err2 != nil {
-		fmt.Printf("Failed to unmarshal file2: %s\n", err2.Error())
+		color.New(color.FgHiRed).Printf("Failed to unmarshal file2: %s\n", err2.Error())
 		os.Exit(3)
 	}
 
 	if len(obj1) == 0 || len(obj2) == 0 {
-		fmt.Printf("\nresult is empty.\n\n")
+		color.New(color.FgHiRed).Printf("\nresult is empty.\n\n")
 		os.Exit(1)
 	}
 
 	res := cmp.Diff(obj1, obj2)
 	if len(res) == 0 {
-		fmt.Printf("\nThe JSON objects are the same.\n\n")
+		color.New(color.FgHiGreen).Printf("\nThe JSON objects are the same.\n\n")
 		os.Exit(0)
 	}
 

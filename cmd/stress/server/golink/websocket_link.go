@@ -10,6 +10,7 @@ import (
 	"github.com/BeCrafter/commander/cmd/stress/model"
 	"github.com/BeCrafter/commander/cmd/stress/server/client"
 	"github.com/BeCrafter/commander/helper"
+	"github.com/fatih/color"
 )
 
 const (
@@ -89,7 +90,7 @@ func webSocketRequest(chanID uint64, ch chan<- *model.RequestResults, i uint64, 
 		msg, err = ws.Read()
 		if err != nil {
 			errCode = model.ParseError
-			fmt.Println("读取数据 失败~")
+			color.New(color.BgHiRed).Println("读取数据 失败~")
 		} else {
 			errCode, isSucceed = request.GetVerifyWebSocket()(request, seq, msg)
 		}

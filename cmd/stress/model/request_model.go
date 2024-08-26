@@ -9,6 +9,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/fatih/color"
 )
 
 // 返回 code 码
@@ -255,12 +257,12 @@ func (r *Request) Print() {
 	if r == nil {
 		return
 	}
-	result := fmt.Sprintf("request:\n form:%s \n url:%s \n method:%s \n headers:%v \n", r.Form, r.URL, r.Method,
+	result := fmt.Sprintf("Request:\n  form:%s \n  url:%s \n  method:%s \n  headers:%v \n", r.Form, r.URL, r.Method,
 		r.Headers)
-	result = fmt.Sprintf("%s data:%v \n", result, r.Body)
-	result = fmt.Sprintf("%s verify:%s \n timeout:%s \n debug:%v \n", result, r.Verify, r.Timeout, r.Debug)
-	result = fmt.Sprintf("%s http2.0：%v \n keepalive：%v \n maxCon:%v ", result, r.HTTP2, r.Keepalive, r.MaxCon)
-	fmt.Println(result)
+	result = fmt.Sprintf("%s  data:%v \n", result, r.Body)
+	result = fmt.Sprintf("%s  verify:%s \n  timeout:%s \n  debug:%v \n", result, r.Verify, r.Timeout, r.Debug)
+	result = fmt.Sprintf("%s  http2.0：%v \n  keepalive：%v \n  maxCon:%v ", result, r.HTTP2, r.Keepalive, r.MaxCon)
+	color.New(color.FgBlue).Println(result)
 	return
 }
 

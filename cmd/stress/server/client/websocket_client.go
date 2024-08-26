@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/fatih/color"
 	"golang.org/x/net/websocket"
 )
 
@@ -100,14 +101,14 @@ func (w *WebSocket) GetConn() (err error) {
 	for i = 0; i < connRetry; i++ {
 		conn, err = Dial(w.getLink(), "", w.getOrigin(), w.HTTPHeader)
 		if err != nil {
-			fmt.Println("GetConn 建立连接失败 in...", i, err)
+			color.New(color.BgHiRed).Println("GetConn 建立连接失败 in...", i, err)
 			continue
 		}
 		w.conn = conn
 		return
 	}
 	if err != nil {
-		fmt.Println("GetConn 建立连接失败", i, err)
+		color.New(color.BgHiRed).Println("GetConn 建立连接失败", i, err)
 	}
 	return
 }
@@ -135,7 +136,7 @@ func (w *WebSocket) Read() (msg []byte, err error) {
 	msg = make([]byte, 512)
 	n, err := w.conn.Read(msg)
 	if err != nil {
-		fmt.Println("接收数据失败:", err)
+		color.New(color.BgHiRed).Println("接收数据失败:", err)
 		return nil, err
 	}
 	return msg[:n], nil

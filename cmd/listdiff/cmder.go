@@ -8,6 +8,7 @@ import (
 
 	"github.com/BeCrafter/commander/cmd"
 	"github.com/BeCrafter/commander/helper"
+	"github.com/fatih/color"
 	"github.com/spf13/cast"
 	"github.com/urfave/cli/v2"
 )
@@ -95,7 +96,7 @@ type CommonRes struct {
 
 func (c *Cmder) Action(ctx *cli.Context) error {
 	if len(ctx.StringSlice("host")) < 2 {
-		fmt.Fprintf(os.Stderr, "Error: %v\n\n", helper.ColorSize("至少需要两个请求 or 存在请求失败/空 or 数据不存在可比性", helper.FgRed))
+		color.New(color.FgRed).Fprintf(os.Stderr, "Error: %v\n\n", "至少需要两个请求 or 存在请求失败/空 or 数据不存在可比性")
 		return cli.ShowSubcommandHelp(ctx)
 	}
 
@@ -120,16 +121,16 @@ func (c *Cmder) Action(ctx *cli.Context) error {
 	ukeyList2, resList2 := doItem(ret2)
 
 	fmt.Printf("\n\n")
-	fmt.Println(helper.ColorSize("============================== ## 下面为Diff数据汇总 ## ==============================", helper.FgYellow))
+	color.New(color.FgHiYellow).Println("============================== ## 下面为Diff数据汇总 ## ==============================")
 	fmt.Printf("\n\n")
 
 	// 对比结果个数
 	fLen := len(ukeyList1)
 	sLen := len(ukeyList2)
 	if fLen != sLen {
-		fmt.Println(helper.ColorSize(fmt.Sprintf("# 数据个数不一致: 第一个[%v] 第二个[%v]", fLen, sLen), helper.FgRed))
+		color.New(color.FgRed).Printf("# 数据个数不一致: 第一个[%v] 第二个[%v]", fLen, sLen)
 	} else {
-		fmt.Println(helper.ColorSize(fmt.Sprintf("# 数据个数一致: 第一个[%v] 第二个[%v]", fLen, sLen), helper.FgGreen))
+		color.New(color.FgGreen).Printf("# 数据个数一致: 第一个[%v] 第二个[%v]", fLen, sLen)
 	}
 
 	fmt.Printf("\n\n\n")
@@ -137,9 +138,9 @@ func (c *Cmder) Action(ctx *cli.Context) error {
 	// 对比结果顺序一致性
 	for k, v := range ukeyList1 {
 		if v != ukeyList2[k] {
-			fmt.Println(helper.ColorSize(fmt.Sprintf("<-> 数据顺序不一致: Pos[%v] 第一个[%v] 第二个[%v]", k, v, ukeyList2[k]), helper.FgRed))
+			color.New(color.FgRed).Printf("<-> 数据顺序不一致: Pos[%v] 第一个[%v] 第二个[%v]", k, v, ukeyList2[k])
 		} else {
-			fmt.Println(helper.ColorSize(fmt.Sprintf("=== 数据顺序一致: Pos[%v] 第一个[%v] 第二个[%v]", k, v, ukeyList2[k]), helper.FgGreen))
+			color.New(color.FgGreen).Printf("=== 数据顺序一致: Pos[%v] 第一个[%v] 第二个[%v]", k, v, ukeyList2[k])
 		}
 	}
 
@@ -149,20 +150,20 @@ func (c *Cmder) Action(ctx *cli.Context) error {
 	for k, v := range resList1 {
 		if v2, has := resList2[k]; has {
 			if v != v2 {
-				fmt.Println(helper.ColorSize(fmt.Sprintf("+++ 数据不一致: [%v] 第一个[%v] 第二个[%v]", k, v, v2), helper.FgYellow))
+				color.New(color.FgYellow).Printf("+++ 数据不一致: [%v] 第一个[%v] 第二个[%v]", k, v, v2)
 			} else {
-				fmt.Println(helper.ColorSize(fmt.Sprintf("=== 数据一致: [%v] 第一个[%v] 第二个[%v]", k, v, v2), helper.FgGreen))
+				color.New(color.FgGreen).Printf("=== 数据一致: [%v] 第一个[%v] 第二个[%v]", k, v, v2)
 			}
 			delete(resList2, k)
 		} else {
-			fmt.Println(helper.ColorSize(fmt.Sprintf("<-- 数据不一致: [%v] 第一个[%v] 第二个[无]", k, v), helper.FgRed))
+			color.New(color.FgRed).Printf("<-- 数据不一致: [%v] 第一个[%v] 第二个[无]", k, v)
 		}
 	}
 
 	if len(resList2) > 0 {
 		fmt.Println("")
 		for k, v := range resList2 {
-			fmt.Println(helper.ColorSize(fmt.Sprintf("--> 数据不一致: [%v] 第一个[无] 第二个[%v]", k, v), helper.FgRed))
+			color.New(color.FgRed).Printf("--> 数据不一致: [%v] 第一个[无] 第二个[%v]", k, v)
 		}
 	}
 
