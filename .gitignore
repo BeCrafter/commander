@@ -35,3 +35,8 @@ main
 __debug_bin*
 test
 output
+/bin
+jparser
+jsondiff
+listdiff
+stress
