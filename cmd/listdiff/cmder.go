@@ -163,7 +163,7 @@ func (c *Cmder) Action(ctx *cli.Context) error {
 	for k, v := range resList1 {
 		if v2, has := resList2[k]; has {
 			if v != v2 {
-				color.New(color.FgYellow).Printf("+++ 数据存异: [%v] 第一个[%v] 第二个[%v]\n", helper.StrLeftPad(k, 3, " "), v, v2)
+				color.New(color.FgYellow).Printf("<-> 数据存异: [%v] 第一个[%v] 第二个[%v]\n", helper.StrLeftPad(k, 3, " "), v, v2)
 			} else {
 				color.New(color.FgGreen).Printf("=== 数据相同: [%v] 第一个[%v] 第二个[%v]\n", helper.StrLeftPad(k, 3, " "), v, v2)
 			}
