@@ -71,7 +71,7 @@ run(){
         fi
     done
     echo "\n\n#======================# Path: ${url_item} #======================#"
-    ${OUTDIR}/commander jsondiff ${params} ${cmd_params[@]}
+    ${OUTDIR}/commander jsondiff ${params} ${cmd_params[@]} --sort
 }
 
 if [[ $index -ge 0 ]]; then

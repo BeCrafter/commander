@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/google/go-cmp/cmp"
@@ -71,12 +72,27 @@ func (r *Request) Run() ([]byte, []byte) {
 	url1 := r.Host[0] + r.Url
 	url2 := r.Host[1] + r.Url
 
-	str1, err1 := r.sendRequest(r.Method, url1, data)
+	var str1, str2 []byte
+	var err1, err2 error
+	for i := 0; i < 3; i++ {
+		str1, err1 = r.sendRequest(r.Method, url1, data)
+		if len(str1) > 0 {
+			break
+		}
+		time.Sleep(time.Millisecond * 100)
+	}
 	if err1 != nil {
 		color.New(color.FgHiRed).Printf("Error fetching result from %s: %v\n", url1, err1)
 		os.Exit(2)
 	}
-	str2, err2 := r.sendRequest(r.Method, url2, data)
+
+	for i := 0; i < 3; i++ {
+		str2, err2 = r.sendRequest(r.Method, url2, data)
+		if len(str2) > 0 {
+			break
+		}
+		time.Sleep(time.Millisecond * 100)
+	}
 	if err2 != nil {
 		color.New(color.FgHiRed).Printf("Error fetching result from %s: %v\n", url2, err2)
 		os.Exit(2)
