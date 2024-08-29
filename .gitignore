@@ -41,3 +41,4 @@ jsondiff
 listdiff
 stress
 /scripts
+*.bak

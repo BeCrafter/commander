@@ -22,17 +22,27 @@
             "mode": "auto",
             "program": "${workspaceFolder}/main.go",
             "args": [
-                "jsondiff",
+                "listdiff",
                 "-t",
-                "http://127.0.0.1:8079",
+                "http://127.0.0.1:8000",
                 "-t",
-                "http://10.52.10.190:8000",
+                "http://127.0.0.1:8000",
                 "-u",   
-                "/v1/product/info/get?product_id=2010",
+                "/v1/mix/product/list?package_ids=1300",
                 "-X",
                 "GET",
                 "--sort",
                 "--debug",
+            ]
+        },
+        {
+            "name": "test",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/test/main.go",
+            "args": [
+
             ]
         }
     ]
