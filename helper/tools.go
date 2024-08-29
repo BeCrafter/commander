@@ -99,8 +99,6 @@ func interfaceSliceToSortSlice(slice interface{}) (interface{}, bool) {
 			json.Unmarshal([]byte(s), &ret[i])
 		}
 		slice = ret
-	default:
-		return nil, false
 	}
 
 	return slice, true
