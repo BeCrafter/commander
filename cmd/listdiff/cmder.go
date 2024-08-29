@@ -65,6 +65,11 @@ func (c *Cmder) Register() *cli.Command {
 				Usage:   "Diff Output Format (ascii, delta)",
 				Value:   "ascii",
 			},
+			&cli.IntFlag{
+				Name:  "retry",
+				Usage: "Retry times (default: 1)",
+				Value: 1,
+			},
 			&cli.BoolFlag{
 				Name:  "debug",
 				Usage: "Debug mode",
@@ -106,6 +111,7 @@ func (c *Cmder) Action(ctx *cli.Context) error {
 		Url:    ctx.String("url"),
 		Header: ctx.StringSlice("header"),
 		Data:   ctx.StringSlice("data"),
+		Retry:  ctx.Int("retry"),
 		Debug:  ctx.Bool("debug"),
 		Quiet:  ctx.Bool("quiet"),
 		Sort:   ctx.Bool("sort"),
@@ -130,7 +136,11 @@ func (c *Cmder) Action(ctx *cli.Context) error {
 	if fLen != sLen {
 		color.New(color.FgRed).Printf("# 数据个数存异: 第一个[%v] 第二个[%v]\n", fLen, sLen)
 	} else {
-		color.New(color.FgGreen).Printf("# 数据个数相同: 第一个[%v] 第二个[%v]\n", fLen, sLen)
+		if fLen == 0 {
+			color.New(color.FgRed).Printf("# 数据个数为空: 第一个[%v] 第二个[%v]\n", fLen, sLen)
+		} else {
+			color.New(color.FgGreen).Printf("# 数据个数相同: 第一个[%v] 第二个[%v]\n", fLen, sLen)
+		}
 	}
 
 	if fLen == 0 || sLen == 0 {

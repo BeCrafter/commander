@@ -63,6 +63,11 @@ func (c *Cmder) Register() *cli.Command {
 				Usage:   "Diff Output Format (ascii, delta)",
 				Value:   "ascii",
 			},
+			&cli.IntFlag{
+				Name:  "retry",
+				Usage: "Retry times (default: 1)",
+				Value: 1,
+			},
 			&cli.BoolFlag{
 				Name:  "debug",
 				Usage: "Debug mode",
@@ -92,11 +97,17 @@ func (c *Cmder) Action(ctx *cli.Context) error {
 		Url:    ctx.String("url"),
 		Header: ctx.StringSlice("header"),
 		Data:   ctx.StringSlice("data"),
+		Retry:  ctx.Int("retry"),
 		Debug:  ctx.Bool("debug"),
 		Quiet:  ctx.Bool("quiet"),
 		Sort:   ctx.Bool("sort"),
 	}
 	str1, str2 := req.Run()
+
+	if len(str1) == 0 || len(str2) == 0 {
+		color.New(color.FgHiRed).Printf("\nresult is empty.\n\n")
+		return nil
+	}
 
 	var str string
 	switch ctx.String("tool") {

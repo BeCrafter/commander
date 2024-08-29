@@ -23,6 +23,7 @@ type Request struct {
 	Url    string
 	Header []string
 	Data   []string
+	Retry  int
 	Debug  bool
 	Quiet  bool
 	Sort   bool
@@ -72,27 +73,13 @@ func (r *Request) Run() ([]byte, []byte) {
 	url1 := r.Host[0] + r.Url
 	url2 := r.Host[1] + r.Url
 
-	var str1, str2 []byte
-	var err1, err2 error
-	for i := 0; i < 3; i++ {
-		str1, err1 = r.sendRequest(r.Method, url1, data)
-		if len(str1) > 0 {
-			break
-		}
-		time.Sleep(time.Millisecond * 100)
-	}
+	str1, err1 := r.sendRequestWithRetry(url1, data)
 	if err1 != nil {
 		color.New(color.FgHiRed).Printf("Error fetching result from %s: %v\n", url1, err1)
 		os.Exit(2)
 	}
 
-	for i := 0; i < 3; i++ {
-		str2, err2 = r.sendRequest(r.Method, url2, data)
-		if len(str2) > 0 {
-			break
-		}
-		time.Sleep(time.Millisecond * 100)
-	}
+	str2, err2 := r.sendRequestWithRetry(url2, data)
 	if err2 != nil {
 		color.New(color.FgHiRed).Printf("Error fetching result from %s: %v\n", url2, err2)
 		os.Exit(2)
@@ -108,8 +95,20 @@ func (r *Request) Run() ([]byte, []byte) {
 	return str1, str2
 }
 
+// sendRequestWithRetry 发送HTTP请求并重试
+func (r *Request) sendRequestWithRetry(url string, data string) (ret []byte, err error) {
+	for i := 0; i < r.Retry; i++ {
+		ret, err = r.sendRequest(url, data)
+		if err == nil {
+			break
+		}
+		time.Sleep(time.Millisecond * 100)
+	}
+	return ret, err
+}
+
 // SendRequest 发送HTTP请求
-func (r *Request) sendRequest(method, url string, data string) ([]byte, error) {
+func (r *Request) sendRequest(url string, data string) ([]byte, error) {
 	var req *http.Request
 	var err error
 
@@ -117,9 +116,9 @@ func (r *Request) sendRequest(method, url string, data string) ([]byte, error) {
 		color.New(color.FgYellow).Printf("Sending request to: %s params: %s\n", url, data)
 	}
 
-	switch method {
+	switch r.Method {
 	case "POST":
-		req, err = http.NewRequest(method, url, bytes.NewBufferString(data))
+		req, err = http.NewRequest(r.Method, url, bytes.NewBufferString(data))
 		if err != nil {
 			return nil, err
 		}
@@ -131,7 +130,7 @@ func (r *Request) sendRequest(method, url string, data string) ([]byte, error) {
 				url += "?" + data
 			}
 		}
-		req, err = http.NewRequest(method, url, nil)
+		req, err = http.NewRequest(r.Method, url, nil)
 		if err != nil {
 			return nil, err
 		}
