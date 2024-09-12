@@ -2,9 +2,9 @@
 package model
 
 import (
+	"bufio"
 	"encoding/json"
 	"errors"
-	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -36,14 +36,12 @@ func (c *CURL) getDataValue(keys []string) []string {
 }
 
 // ParseTheFile 从文件中解析curl
-func ParseTheFile(path string) (curl *CURL, err error) {
+func ParseTheFile(path string) (curls []*CURL, err error) {
 	if path == "" {
 		err = errors.New("路径不能为空")
 		return
 	}
-	curl = &CURL{
-		Data: make(map[string][]string),
-	}
+
 	file, err := os.Open(path)
 	if err != nil {
 		err = errors.New("打开文件失败:" + err.Error())
@@ -52,35 +50,57 @@ func ParseTheFile(path string) (curl *CURL, err error) {
 	defer func() {
 		_ = file.Close()
 	}()
-	dataBytes, err := io.ReadAll(file)
-	if err != nil {
-		err = errors.New("读取文件失败:" + err.Error())
-		return
-	}
-	args, err := shellwords.Parse(string(dataBytes))
-	if err != nil {
-		err = errors.New("解析文件失败:" + err.Error())
-		return
-	}
-	args = argsTrim(args)
-	var key string
-	for _, arg := range args {
-		arg = removeSpaces(arg)
-		if arg == "" {
+
+	itemstr := ""
+	itemsList := []string{}
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if len(line) == 0 || strings.HasPrefix(line, "#") {
 			continue
 		}
-		if isURL(arg) {
-			curl.Data[keyCurl] = append(curl.Data[keyCurl], arg)
-			key = ""
-			continue
+		itemstr += " " + line
+
+		if strings.HasPrefix(line, "---") {
+			itemsList = append(itemsList, itemstr)
+			itemstr = ""
 		}
-		if isKey(arg) {
-			key = arg
-			continue
-		}
-		curl.Data[key] = append(curl.Data[key], arg)
 	}
-	return
+
+	if len(itemstr) > 0 {
+		itemsList = append(itemsList, itemstr)
+	}
+
+	for _, item := range itemsList {
+		curl := &CURL{
+			Data: make(map[string][]string),
+		}
+		args, err := shellwords.Parse(item)
+		if err != nil {
+			return nil, errors.New("解析文件失败:" + err.Error())
+		}
+		args = argsTrim(args)
+		var key string
+		for _, arg := range args {
+			arg = removeSpaces(arg)
+			if arg == "" {
+				continue
+			}
+			if isURL(arg) {
+				curl.Data[keyCurl] = append(curl.Data[keyCurl], arg)
+				key = ""
+				continue
+			}
+			if isKey(arg) {
+				key = arg
+				continue
+			}
+			curl.Data[key] = append(curl.Data[key], arg)
+		}
+		curls = append(curls, curl)
+	}
+
+	return curls, nil
 }
 
 func argsTrim(args []string) []string {

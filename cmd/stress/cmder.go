@@ -1,11 +1,13 @@
 package stress
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"os"
 	"os/signal"
 	"runtime"
+	"strings"
 	"syscall"
 	"time"
 
@@ -20,22 +22,20 @@ import (
 var _ cmd.ICmder = (*Cmder)(nil)
 
 type Cmder struct {
-	concurrency uint64   // 并发数
-	totalNumber uint64   // 请求数(单个并发/协程)
-	requestURL  string   // 压测的url 目前支持，http/https ws/wss
-	requestPath string   // curl文件路径 http接口压测，自定义参数设置
-	verify      string   // verify 验证方法 在server/verify中 http 支持:statusCode、json webSocket支持:json
-	header      []string // 自定义头信息传递给服务器
-	body        string   // HTTP POST方式传送数据
-	maxConnect  int      // 单个连接最大请求数
-	code        int      // 成功状态码
-	cpuNumber   int      // CUP 核数，默认为一核，一般场景下单核已经够用了
-	timeout     int64    // 接口超时时间
-	runtime     int64    // 压测程序最大执行时间，默认不设置
-	redirect    bool     // 是否重定向
-	debug       bool     // 是否是debug
-	http2       bool     // 是否开http2.0
-	keepalive   bool     // 是否开启长连接
+	params model.Params
+
+	concurrency uint64 // 并发数
+	totalNumber uint64 // 请求数(单个并发/协程)
+	maxConnect  int    // 单个连接最大请求数
+	cpuNumber   int    // CUP 核数，默认为一核，一般场景下单核已经够用了
+	timeout     int64  // 接口超时时间
+	runtime     int64  // 压测程序最大执行时间，默认不设置
+	redirect    bool   // 是否重定向
+	debug       bool   // 是否是debug
+	http2       bool   // 是否开http2.0
+	keepalive   bool   // 是否开启长连接
+	path        string // curl文件路径 http接口压测，自定义参数设置
+	file        string // 压测源文件
 }
 
 func NewCmder() *Cmder {
@@ -67,7 +67,7 @@ func (c *Cmder) Register() *cli.Command {
 			&cli.StringFlag{
 				Name:    "path",
 				Aliases: []string{"p"},
-				Usage:   "请求路径",
+				Usage:   "curl文件路径",
 			},
 			&cli.StringFlag{
 				Name:    "verify",
@@ -124,20 +124,30 @@ func (c *Cmder) Register() *cli.Command {
 				Name:  "http2",
 				Usage: "是否开 http2.0",
 			},
+			&cli.StringFlag{
+				Name:  "file",
+				Usage: "压测源文件路径",
+			},
 		},
 	}
 }
 
 func (c *Cmder) checker(ctx *cli.Context) error {
+	c.file = ctx.String("file")
+	if len(c.file) == 0 {
+		c.params = model.Params{
+			URL:    ctx.String("url"),
+			Header: ctx.StringSlice("header"),
+			Body:   ctx.String("data"),
+			Verify: ctx.String("verify"),
+			Code:   ctx.Int("code"),
+		}
+	}
+
+	c.path = ctx.String("path")
 	c.concurrency = ctx.Uint64("concurrency")
 	c.totalNumber = ctx.Uint64("number")
-	c.requestURL = ctx.String("url")
-	c.requestPath = ctx.String("path")
-	c.verify = ctx.String("verify")
-	c.header = ctx.StringSlice("header")
-	c.body = ctx.String("data")
 	c.maxConnect = ctx.Int("maxconnect")
-	c.code = ctx.Int("code")
 	c.cpuNumber = ctx.Int("cpunum")
 	c.timeout = ctx.Int64("timeout")
 	c.runtime = ctx.Int64("runtime")
@@ -146,10 +156,10 @@ func (c *Cmder) checker(ctx *cli.Context) error {
 	c.keepalive = ctx.Bool("keepalive")
 	c.http2 = ctx.Bool("http2")
 
-	if c.concurrency == 0 || c.totalNumber == 0 || (c.requestURL == "" && c.requestPath == "") {
+	if c.concurrency == 0 || c.totalNumber == 0 || (c.params.URL == "" && c.path == "" && c.file == "") {
 		fmt.Printf("\n示例: \n\n    go run main.go stress -c 1 -n 1 -u https://www.baidu.com/ \n\n")
 		fmt.Printf("  1. 压测地址或curl路径必填 \n")
-		fmt.Printf("  2. 当前请求参数: -c %d -n %d -d %v -u %s \n\n\n", c.concurrency, c.totalNumber, c.debug, c.requestURL)
+		fmt.Printf("  2. 当前请求参数: -c %d -n %d -d %v -u %s \n\n\n", c.concurrency, c.totalNumber, c.debug, c.params.URL)
 		return fmt.Errorf("参数不合法")
 	}
 
@@ -163,15 +173,65 @@ func (c *Cmder) Action(ctx *cli.Context) error {
 
 	runtime.GOMAXPROCS(c.cpuNumber)
 
-	request, err := model.NewRequest(c.requestURL, c.verify, c.code,
-		time.Duration(c.timeout)*time.Second, c.debug, c.requestPath, c.header,
-		c.body, c.maxConnect, c.http2, c.keepalive, c.redirect)
-	if err != nil {
-		return fmt.Errorf("参数不合法, Err: %v", err)
-	}
-
 	color.New(color.FgGreen).Printf("\n开始启动  并发数:%d 请求数:%d 请求参数: \n\n", c.concurrency, c.totalNumber)
-	request.Print()
+
+	var requests [](*model.Request)
+	if c.path != "" { // curl 文件路径
+		curls, err := model.ParseTheFile(c.path)
+		if err != nil {
+			return fmt.Errorf("文件读取失败, Err: %v", err)
+		}
+		for _, curl := range curls {
+			var params model.Params
+			params.URL = curl.GetURL()
+			for k, v := range curl.GetHeaders() {
+				params.Header = append(params.Header, k+":"+v)
+			}
+			params.Body = curl.GetBody()
+			request, err := model.NewRequest(params, time.Duration(c.timeout)*time.Second,
+				c.maxConnect, c.http2, c.keepalive, c.redirect, c.debug)
+			if err != nil {
+				return fmt.Errorf("参数不合法, Err: %v", err)
+			}
+			requests = append(requests, request)
+		}
+	} else if c.file != "" { // 自定义json文件路径
+		// 此处读取文件，逐行解析并追加到 requests 数组中
+		file, err := os.Open(c.file)
+		if err != nil {
+			return fmt.Errorf("文件读取失败, Err: %v", err)
+		}
+		defer file.Close()
+
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			line := scanner.Text()
+			if len(line) == 0 || strings.HasPrefix(line, "#") {
+				continue
+			}
+
+			var params model.Params
+			err := model.ParseParams(line, &params)
+
+			if err != nil {
+				return fmt.Errorf("参数不合法, Err: %v", err)
+			}
+			request, err := model.NewRequest(params, time.Duration(c.timeout)*time.Second,
+				c.maxConnect, c.http2, c.keepalive, c.redirect, c.debug)
+			if err != nil {
+				return fmt.Errorf("参数不合法, Err: %v", err)
+			}
+			requests = append(requests, request)
+		}
+	} else { // 命令行参数
+		request, err := model.NewRequest(c.params, time.Duration(c.timeout)*time.Second,
+			c.maxConnect, c.http2, c.keepalive, c.redirect, c.debug)
+		if err != nil {
+			return fmt.Errorf("参数不合法, Err: %v", err)
+		}
+		request.Print()
+		requests = append(requests, request)
+	}
 
 	// 开始处理
 	cctx := context.Background()
@@ -194,7 +254,14 @@ func (c *Cmder) Action(ctx *cli.Context) error {
 		cancelFunc()
 	}()
 
-	server.Dispose(cctx, c.concurrency, c.totalNumber, request)
+	if c.debug && len(requests) > 0 {
+		color.New(color.FgYellow).Printf("\nDebug 模式开启: \n\n")
+		for _, r := range requests {
+			r.Print()
+			fmt.Printf("\n")
+		}
+	}
+	server.Dispose(cctx, c.concurrency, c.totalNumber, requests)
 
 	return nil
 }

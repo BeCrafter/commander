@@ -29,7 +29,7 @@ func init() {
 }
 
 // Dispose 处理函数
-func Dispose(ctx context.Context, concurrency, totalNumber uint64, request *model.Request) {
+func Dispose(ctx context.Context, concurrency, totalNumber uint64, requests [](*model.Request)) {
 	// 设置接收数据缓存
 	ch := make(chan *model.RequestResults, 1000)
 	var (
@@ -41,6 +41,7 @@ func Dispose(ctx context.Context, concurrency, totalNumber uint64, request *mode
 
 	for i := uint64(0); i < concurrency; i++ {
 		wg.Add(1)
+		request := requests[i%uint64(len(requests))]
 		switch request.Form {
 		case model.FormTypeHTTP:
 			go golink.HTTP(ctx, i, ch, totalNumber, &wg, request)

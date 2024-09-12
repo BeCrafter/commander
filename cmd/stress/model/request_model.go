@@ -2,6 +2,7 @@
 package model
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -11,7 +12,24 @@ import (
 	"time"
 
 	"github.com/fatih/color"
+	"github.com/go-playground/validator/v10"
 )
+
+type Params struct {
+	URL    string   `json:"url"    validate:"required"`  // 压测的url 目前支持，http/https ws/wss
+	Header []string `json:"header" validate:"omitempty"` // 自定义头信息传递给服务器
+	Body   string   `json:"body"   validate:"omitempty"` // HTTP POST方式传送数据
+	Verify string   `json:"verify" validate:"omitempty"` // verify 验证方法 在server/verify中 http 支持:statusCode、json webSocket支持:json
+	Code   int      `json:"code"   validate:"omitempty"` // 成功状态码
+}
+
+// ParseParams 解析参数
+func ParseParams(str string, params *Params) error {
+	if err := json.NewDecoder(strings.NewReader(str)).Decode(params); err != nil {
+		return err
+	}
+	return validator.New().Struct(params)
+}
 
 // 返回 code 码
 const (
@@ -134,51 +152,39 @@ func (r *Request) GetVerifyWebSocket() VerifyWebSocket {
 // timeout 请求超时时间
 // debug 是否开启debug
 // path curl文件路径 http接口压测，自定义参数设置
-func NewRequest(url string, verify string, code int, timeout time.Duration, debug bool, path string,
-	reqHeaders []string, reqBody string, maxCon int, http2, keepalive, redirect bool) (request *Request, err error) {
+func NewRequest(params Params, timeout time.Duration, maxCon int,
+	http2, keepalive, redirect, debug bool) (request *Request, err error) {
 	var (
 		method  = "GET"
 		headers = make(map[string]string)
 		body    string
 	)
-	if path != "" {
-		var curl *CURL
-		curl, err = ParseTheFile(path)
-		if err != nil {
-			return nil, err
-		}
-		if url == "" {
-			url = curl.GetURL()
-		}
-		method = curl.GetMethod()
-		headers = curl.GetHeaders()
-		body = curl.GetBody()
-	} else {
-		if reqBody != "" {
-			method = "POST"
-			body = reqBody
-		}
-		for _, v := range reqHeaders {
-			getHeaderValue(v, headers)
-		}
-		if _, ok := headers["Content-Type"]; !ok {
-			headers["Content-Type"] = "application/x-www-form-urlencoded; charset=utf-8"
-		}
+
+	if params.Body != "" {
+		method = "POST"
+		body = params.Body
 	}
+	for _, v := range params.Header {
+		getHeaderValue(v, headers)
+	}
+	if _, ok := headers["Content-Type"]; !ok {
+		headers["Content-Type"] = "application/x-www-form-urlencoded; charset=utf-8"
+	}
+
 	var form string
-	form, url = getForm(url)
+	form, params.URL = getForm(params.URL)
 	if form == "" {
-		err = fmt.Errorf("url:%s 不合法,必须是完整http、webSocket连接", url)
+		err = fmt.Errorf("url:%s 不合法,必须是完整http、webSocket连接", params.URL)
 		return
 	}
 	var ok bool
 	switch form {
 	case FormTypeHTTP:
 		// verify
-		if verify == "" {
-			verify = "statusCode"
+		if params.Verify == "" {
+			params.Verify = "statusCode"
 		}
-		key := fmt.Sprintf("%s.%s", form, verify)
+		key := fmt.Sprintf("%s.%s", form, params.Verify)
 		_, ok = verifyMapHTTP[key]
 		if !ok {
 			err = errors.New("验证器不存在:" + key)
@@ -186,10 +192,10 @@ func NewRequest(url string, verify string, code int, timeout time.Duration, debu
 		}
 	case FormTypeWebSocket:
 		// verify
-		if verify == "" {
-			verify = "json"
+		if params.Verify == "" {
+			params.Verify = "json"
 		}
-		key := fmt.Sprintf("%s.%s", form, verify)
+		key := fmt.Sprintf("%s.%s", form, params.Verify)
 		_, ok = verifyMapWebSocket[key]
 		if !ok {
 			err = errors.New("验证器不存在:" + key)
@@ -200,18 +206,18 @@ func NewRequest(url string, verify string, code int, timeout time.Duration, debu
 		timeout = 30 * time.Second
 	}
 	request = &Request{
-		URL:       url,
+		URL:       params.URL,
 		Form:      form,
 		Method:    strings.ToUpper(method),
 		Headers:   headers,
 		Body:      body,
-		Verify:    verify,
+		Verify:    params.Verify,
 		Timeout:   timeout,
 		Debug:     debug,
 		MaxCon:    maxCon,
 		HTTP2:     http2,
 		Keepalive: keepalive,
-		Code:      code,
+		Code:      params.Code,
 		Redirect:  redirect,
 	}
 	return
