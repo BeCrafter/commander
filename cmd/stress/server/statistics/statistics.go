@@ -48,6 +48,7 @@ func ReceivingResults(ctx context.Context, concurrent uint64, ch <-chan *model.R
 	statTime := uint64(time.Now().UnixNano())
 	// 错误码/错误个数
 	var errCode = &sync.Map{}
+	var resLen = &sync.Map{}
 	// 定时输出一次计算结果
 	ticker := time.NewTicker(exportStatisticsTime)
 	go func() {
@@ -57,7 +58,7 @@ func ReceivingResults(ctx context.Context, concurrent uint64, ch <-chan *model.R
 				endTime := uint64(time.Now().UnixNano())
 				mutex.Lock()
 				go calculateData(concurrent, processingTime, endTime-statTime, maxTime, minTime, successNum, failureNum,
-					chanIDLen, errCode, receivedBytes)
+					chanIDLen, errCode, resLen, receivedBytes)
 				mutex.Unlock()
 			case <-stopChan:
 				// 处理完成
@@ -98,6 +99,23 @@ func ReceivingResults(ctx context.Context, concurrent uint64, ch <-chan *model.R
 			} else {
 				errCode.Store(data.ErrCode, 1)
 			}
+
+			// 统计响应长度
+			var reskey string
+			if data.ReceivedBytes < 20 {
+				reskey = "L20"
+			} else if data.ReceivedBytes < 50 {
+				reskey = "L50"
+			} else {
+				reskey = "G50"
+			}
+			if value, ok := resLen.Load(reskey); ok {
+				valueInt, _ := value.(int)
+				resLen.Store(reskey, valueInt+1)
+			} else {
+				resLen.Store(reskey, 1)
+			}
+
 			receivedBytes += data.ReceivedBytes
 			if _, ok := chanIDs[data.ChanID]; !ok {
 				chanIDs[data.ChanID] = true
@@ -112,8 +130,8 @@ end:
 	stopChan <- true
 	endTime := uint64(time.Now().UnixNano())
 	requestTime = endTime - statTime
-	calculateData(concurrent, processingTime, requestTime, maxTime, minTime, successNum, failureNum, chanIDLen, errCode,
-		receivedBytes)
+	calculateData(concurrent, processingTime, requestTime, maxTime, minTime, successNum, failureNum,
+		chanIDLen, errCode, resLen, receivedBytes)
 
 	fmt.Printf("\n\n")
 	color.New(color.FgGreen).Println("*************************  结果 stat  ****************************")
@@ -142,7 +160,7 @@ func printTop(requestTimeList []uint64) {
 
 // calculateData 计算数据
 func calculateData(concurrent, processingTime, requestTime, maxTime, minTime, successNum, failureNum uint64,
-	chanIDLen int, errCode *sync.Map, receivedBytes int64) {
+	chanIDLen int, errCode *sync.Map, resLen *sync.Map, receivedBytes int64) {
 	if processingTime == 0 {
 		processingTime = 1
 	}
@@ -166,7 +184,7 @@ func calculateData(concurrent, processingTime, requestTime, maxTime, minTime, su
 	minTimeFloat = float64(minTime) / 1e6
 	requestTimeFloat = float64(requestTime) / 1e9
 	// 打印的时长都为毫秒
-	table(successNum, failureNum, errCode, qps, averageTime, maxTimeFloat, minTimeFloat, requestTimeFloat, chanIDLen,
+	table(successNum, failureNum, errCode, resLen, qps, averageTime, maxTimeFloat, minTimeFloat, requestTimeFloat, chanIDLen,
 		receivedBytes)
 }
 
@@ -174,14 +192,14 @@ func calculateData(concurrent, processingTime, requestTime, maxTime, minTime, su
 func header() {
 	fmt.Printf("\n\n")
 	// 打印的时长都为毫秒 总请数
-	color.New(color.FgGreen).Println("─────┬───────┬───────┬───────┬────────┬────────┬────────┬────────┬────────┬────────┬────────")
-	color.New(color.FgGreen).Println(" 耗时│ 并发数│ 成功数│ 失败数│   qps  │最长耗时│最短耗时│平均耗时│下载字节│字节每秒│ 状态码")
-	color.New(color.FgGreen).Println("─────┼───────┼───────┼───────┼────────┼────────┼────────┼────────┼────────┼────────┼────────")
+	color.New(color.FgGreen).Println("─────┬───────┬───────┬───────┬────────┬────────┬────────┬────────┬────────┬────────┬──────────────────────────────────┬──────────────")
+	color.New(color.FgGreen).Println(" 耗时│ 并发数│ 成功数│ 失败数│   qps  │最长耗时│最短耗时│平均耗时│下载字节│字节每秒│            结果长度分布          │   状态码 ")
+	color.New(color.FgGreen).Println("─────┼───────┼───────┼───────┼────────┼────────┼────────┼────────┼────────┼────────┼──────────────────────────────────┼──────────────")
 	return
 }
 
 // table 打印表格
-func table(successNum, failureNum uint64, errCode *sync.Map,
+func table(successNum, failureNum uint64, errCode *sync.Map, resLen *sync.Map,
 	qps, averageTime, maxTimeFloat, minTimeFloat, requestTimeFloat float64, chanIDLen int, receivedBytes int64) {
 	var (
 		speed int64
@@ -204,24 +222,24 @@ func table(successNum, failureNum uint64, errCode *sync.Map,
 		speedStr = p.Sprintf("%d", speed)
 	}
 	// 打印的时长都为毫秒
-	result := fmt.Sprintf("%4.0fs│%7d│%7d│%7d│%8.2f│%8.2f│%8.2f│%8.2f│%8s│%8s│%v",
+	result := fmt.Sprintf("%4.0fs│%7d│%7d│%7d│%8.2f│%8.2f│%8.2f│%8.2f│%8s│%8s│%v│%v",
 		requestTimeFloat, chanIDLen, successNum, failureNum, qps, maxTimeFloat, minTimeFloat, averageTime,
-		receivedBytesStr, speedStr,
-		printMap(errCode))
+		receivedBytesStr, speedStr, printMap(resLen, 34), printMap(errCode, -20))
 	color.New(color.FgGreen).Println(result)
 	return
 }
 
 // printMap 输出错误码、次数 节约字符(终端一行字符大小有限)
-func printMap(errCode *sync.Map) (mapStr string) {
+func printMap(errCode *sync.Map, llen int) (mapStr string) {
 	var (
 		mapArr []string
 	)
 	errCode.Range(func(key, value interface{}) bool {
-		mapArr = append(mapArr, fmt.Sprintf("%v:%v", key, value))
+		mapArr = append(mapArr, fmt.Sprintf(" %v:%5v", key, value))
 		return true
 	})
 	sort.Strings(mapArr)
-	mapStr = strings.Join(mapArr, ";")
+	mapStr = fmt.Sprintf("%*s", llen, strings.Join(mapArr, ";"))
+
 	return
 }

@@ -64,35 +64,36 @@ func (c *Cmder) Register() *cli.Command {
 				Aliases: []string{"u"},
 				Usage:   "压测地址",
 			},
-			&cli.StringFlag{
-				Name:    "path",
-				Aliases: []string{"p"},
-				Usage:   "curl文件路径",
-			},
-			&cli.StringFlag{
-				Name:    "verify",
-				Aliases: []string{"v"},
-				Usage:   "验证方法 http 支持:statusCode、json webSocket支持:json",
-			},
 			&cli.StringSliceFlag{
 				Name:    "header",
 				Aliases: []string{"H"},
-				Usage:   "自定义头信息传递给服务器 示例:-H 'Content-Type: application/json'",
+				Usage:   "自定义头信息传递给服务器 示例: -H 'Content-Type: application/json'",
 			},
 			&cli.StringFlag{
 				Name:  "data",
 				Usage: "HTTP POST 方式传送数据",
 			},
-			&cli.IntFlag{
-				Name:    "maxconnect",
-				Aliases: []string{"m"},
-				Usage:   "单个host最大连接数",
-				Value:   1,
+			&cli.StringFlag{
+				Name:  "path",
+				Usage: "curl文件路径",
+			},
+			&cli.StringFlag{
+				Name:  "file",
+				Usage: "json文件路径",
+			},
+			&cli.StringFlag{
+				Name:  "verify",
+				Usage: "验证方法 http 支持:statusCode、json webSocket支持:json",
 			},
 			&cli.IntFlag{
 				Name:  "code",
 				Usage: "请求成功的状态码",
 				Value: 200,
+			},
+			&cli.IntFlag{
+				Name:  "maxconnect",
+				Usage: "单个host最大连接数",
+				Value: 1,
 			},
 			&cli.Int64Flag{
 				Name:  "timeout",
@@ -123,10 +124,6 @@ func (c *Cmder) Register() *cli.Command {
 			&cli.BoolFlag{
 				Name:  "http2",
 				Usage: "是否开 http2.0",
-			},
-			&cli.StringFlag{
-				Name:  "file",
-				Usage: "压测源文件路径",
 			},
 		},
 	}
