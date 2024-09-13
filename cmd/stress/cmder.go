@@ -172,11 +172,41 @@ func (c *Cmder) Action(ctx *cli.Context) error {
 
 	color.New(color.FgGreen).Printf("\n开始启动  并发数:%d 请求数:%d 请求参数: \n\n", c.concurrency, c.totalNumber)
 
-	var requests [](*model.Request)
+	// 解析压测参数
+	requests, err := c.ParseRequest()
+	if err != nil {
+		return err
+	}
+
+	// 开始处理
+	cctx, cancel := context.WithCancel(context.Background())
+	if c.runtime > 0 {
+		cctx, cancel = context.WithTimeout(cctx, time.Duration(c.runtime)*time.Second)
+		defer cancel()
+		deadline, ok := cctx.Deadline()
+		if ok {
+			color.New(color.FgYellow).Printf("压测周期: %s ~ %s  总计: %ds", time.Now().Format("2006-01-02 04:05:06"), deadline.Format("2006-01-02 04:05:06"), c.runtime)
+		}
+	}
+
+	// 处理 ctrl+c 信号
+	sigChan := make(chan os.Signal, 1) // 使用带缓冲的通道来避免阻塞
+	signal.Notify(sigChan, syscall.SIGINT)
+	go func() {
+		<-sigChan
+		cancel()
+	}()
+
+	server.Dispose(cctx, c.concurrency, c.totalNumber, requests)
+
+	return nil
+}
+
+func (c *Cmder) ParseRequest() (requests []*model.Request, err error) {
 	if c.path != "" { // curl 文件路径
 		curls, err := model.ParseTheFile(c.path)
 		if err != nil {
-			return fmt.Errorf("文件读取失败, Err: %v", err)
+			return nil, fmt.Errorf("curl 文件读取失败, Err: %v", err)
 		}
 		for _, curl := range curls {
 			var params model.Params
@@ -188,7 +218,7 @@ func (c *Cmder) Action(ctx *cli.Context) error {
 			request, err := model.NewRequest(params, time.Duration(c.timeout)*time.Second,
 				c.maxConnect, c.http2, c.keepalive, c.redirect, c.debug)
 			if err != nil {
-				return fmt.Errorf("参数不合法, Err: %v", err)
+				return nil, fmt.Errorf("curl 参数不合法, Err: %v", err)
 			}
 			requests = append(requests, request)
 		}
@@ -196,7 +226,7 @@ func (c *Cmder) Action(ctx *cli.Context) error {
 		// 此处读取文件，逐行解析并追加到 requests 数组中
 		file, err := os.Open(c.file)
 		if err != nil {
-			return fmt.Errorf("文件读取失败, Err: %v", err)
+			return nil, fmt.Errorf("json 文件读取失败, Err: %v", err)
 		}
 		defer file.Close()
 
@@ -209,47 +239,28 @@ func (c *Cmder) Action(ctx *cli.Context) error {
 
 			var params model.Params
 			err := model.ParseParams(line, &params)
-
 			if err != nil {
-				return fmt.Errorf("参数不合法, Err: %v", err)
+				return nil, fmt.Errorf("json 参数不合法, Err: %v", err)
 			}
+
 			request, err := model.NewRequest(params, time.Duration(c.timeout)*time.Second,
 				c.maxConnect, c.http2, c.keepalive, c.redirect, c.debug)
 			if err != nil {
-				return fmt.Errorf("参数不合法, Err: %v", err)
+				return nil, fmt.Errorf("json 参数不合法, Err: %v", err)
 			}
+
 			requests = append(requests, request)
 		}
 	} else { // 命令行参数
 		request, err := model.NewRequest(c.params, time.Duration(c.timeout)*time.Second,
 			c.maxConnect, c.http2, c.keepalive, c.redirect, c.debug)
 		if err != nil {
-			return fmt.Errorf("参数不合法, Err: %v", err)
+			return nil, fmt.Errorf("cli 参数不合法, Err: %v", err)
 		}
+
 		request.Print()
 		requests = append(requests, request)
 	}
-
-	// 开始处理
-	cctx := context.Background()
-	if c.runtime > 0 {
-		var cancel context.CancelFunc
-		cctx, cancel = context.WithTimeout(cctx, time.Duration(c.runtime)*time.Second)
-		defer cancel()
-		deadline, ok := ctx.Deadline()
-		if ok {
-			fmt.Printf(" deadline %s", deadline)
-		}
-	}
-
-	// 处理 ctrl+c 信号
-	cctx, cancelFunc := context.WithCancel(cctx)
-	sigChan := make(chan os.Signal, 1) // 使用带缓冲的通道来避免阻塞
-	signal.Notify(sigChan, syscall.SIGINT)
-	go func() {
-		<-sigChan
-		cancelFunc()
-	}()
 
 	if c.debug && len(requests) > 0 {
 		color.New(color.FgYellow).Printf("\nDebug 模式开启: \n\n")
@@ -258,7 +269,6 @@ func (c *Cmder) Action(ctx *cli.Context) error {
 			fmt.Printf("\n")
 		}
 	}
-	server.Dispose(cctx, c.concurrency, c.totalNumber, requests)
 
-	return nil
+	return requests, nil
 }

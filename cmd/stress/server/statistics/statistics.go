@@ -134,14 +134,17 @@ end:
 		chanIDLen, errCode, resLen, receivedBytes)
 
 	fmt.Printf("\n\n")
-	color.New(color.FgGreen).Println("*************************  结果 stat  ****************************")
-	color.New(color.FgHiGreen).Println("处理协程数量:", concurrent)
+	color.New(color.FgGreen).Println("****************************************************  结果 stat  *******************************************************")
+	fmt.Println("")
+	color.New(color.FgHiGreen).Println("  处理协程数量:", concurrent)
 	// fmt.Println("处理协程数量:", concurrent, "程序处理总时长:", fmt.Sprintf("%.3f", float64(processingTime/concurrent)/1e9), "秒")
-	color.New(color.FgHiGreen).Println("请求总数（并发数*请求数 -c * -n）:", successNum+failureNum, "总请求时间:",
+	color.New(color.FgHiGreen).Println("  请求总数（并发数*请求数 -c * -n）:", successNum+failureNum, "总请求时间:",
 		fmt.Sprintf("%.3f", float64(requestTime)/1e9),
 		"秒", "successNum:", successNum, "failureNum:", failureNum)
+	fmt.Println("")
 	printTop(requestTimeList)
-	color.New(color.FgGreen).Println("*************************  结果 end   ****************************")
+	fmt.Println("")
+	color.New(color.FgGreen).Println("****************************************************  结果 end   *******************************************************")
 	color.New(color.FgGreen).Printf("\n\n")
 }
 
@@ -153,9 +156,9 @@ func printTop(requestTimeList []uint64) {
 	var all helper.Uint64List
 	all = requestTimeList
 	sort.Sort(all)
-	color.New(color.FgHiGreen).Println("tp90:", fmt.Sprintf("%.3f", float64(all[int(float64(len(all))*0.90)]/1e6)))
-	color.New(color.FgHiGreen).Println("tp95:", fmt.Sprintf("%.3f", float64(all[int(float64(len(all))*0.95)]/1e6)))
-	color.New(color.FgHiGreen).Println("tp99:", fmt.Sprintf("%.3f", float64(all[int(float64(len(all))*0.99)]/1e6)))
+	color.New(color.FgHiGreen).Println("  tp90:", fmt.Sprintf("%.3f", float64(all[int(float64(len(all))*0.90)]/1e6)))
+	color.New(color.FgHiGreen).Println("  tp95:", fmt.Sprintf("%.3f", float64(all[int(float64(len(all))*0.95)]/1e6)))
+	color.New(color.FgHiGreen).Println("  tp99:", fmt.Sprintf("%.3f", float64(all[int(float64(len(all))*0.99)]/1e6)))
 }
 
 // calculateData 计算数据
