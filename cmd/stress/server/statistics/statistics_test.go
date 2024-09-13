@@ -19,11 +19,11 @@ func TestPrintMap(t *testing.T) {
 		a      *sync.Map
 		result string
 	}{
-		"test1": {a: a, result: "100:20;200:50;500:10"},
+		"test1": {a: a, result: " 100:   20; 200:   50; 500:   10"},
 	}
 
 	for _, value := range tt {
-		str := printMap(value.a)
+		str := printMap(value.a, 0)
 		if !reflect.DeepEqual(value.result, str) {
 			t.Errorf("数据不一致 预期:%v 实际:%v", value.result, str)
 		}

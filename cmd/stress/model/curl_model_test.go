@@ -9,13 +9,12 @@ import (
 // TestCurl 测试函数
 func TestCurl(t *testing.T) {
 	// ../curl.txt
-	cs, err := ParseTheFile("../curl/post.curl.txt")
-	c := cs[0]
-	fmt.Println(c, err)
-
+	cs, err := ParseTheFile("../../../data/test.curl.txt")
 	if err != nil {
 		return
 	}
+	c := cs[0]
+
 	fmt.Printf("curl:%s \n", c.String())
 	fmt.Printf("url:%s \n", c.GetURL())
 	fmt.Printf("method:%s \n", c.GetMethod())
